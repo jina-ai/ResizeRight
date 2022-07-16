@@ -1,8 +1,8 @@
-from typing import Tuple
 import warnings
-from math import ceil
-import interp_methods
 from fractions import Fraction
+from math import ceil
+
+from . import interp_methods
 
 
 class NoneClass:
@@ -12,6 +12,7 @@ class NoneClass:
 try:
     import torch
     from torch import nn
+
     nnModuleWrapped = nn.Module
 except ImportError:
     warnings.warn('No PyTorch found, will work only with Numpy')
@@ -23,7 +24,6 @@ try:
 except ImportError:
     warnings.warn('No Numpy found, will work only with PyTorch')
     numpy = None
-
 
 if numpy is None and torch is None:
     raise ImportError("Must have either Numpy or PyTorch but both not found")
@@ -58,7 +58,7 @@ def resize(input, scale_factors=None, out_shape=None,
     sorted_filtered_dims_and_scales = [(dim, scale_factors[dim], by_convs[dim],
                                         in_shape[dim], out_shape[dim])
                                        for dim in sorted(range(n_dims),
-                                       key=lambda ind: scale_factors[ind])
+                                                         key=lambda ind: scale_factors[ind])
                                        if scale_factors[dim] != 1.]
 
     # unless support size is specified by the user, it is an attribute
@@ -81,10 +81,10 @@ def resize(input, scale_factors=None, out_shape=None,
         # STEP 1.5: ANTIALIASING- If antialiasing is taking place, we modify
         # the window size and the interpolation method (see inside function)
         cur_interp_method, cur_support_sz = apply_antialiasing_if_needed(
-                                                                interp_method,
-                                                                support_sz,
-                                                                scale_factor,
-                                                                antialiasing)
+            interp_method,
+            support_sz,
+            scale_factor,
+            antialiasing)
 
         # STEP 2- FIELDS OF VIEW: for each output pixels, map the input pixels
         # that influence it. Also calculate needed padding and update grid
@@ -188,7 +188,7 @@ def calc_pad_sz(in_sz, out_sz, field_of_view, projected_grid, scale_factor,
         #    input coordinate. if the result is positive padding is needed. if
         #    negative then negative padding means shaving off pixel columns.
         right_pads = (((out_sz - fw_arange(num_convs, fw, device) - 1)  # (1)
-                      // num_convs)  # (2)
+                       // num_convs)  # (2)
                       * stride  # (3)
                       + field_of_view[:, -1]  # (4)
                       - in_sz + 1)  # (5)
@@ -238,7 +238,7 @@ def apply_weights(input, field_of_view, weights, dim, n_dims, pad_sz, pad_mode,
     # of weights matching the field of view. we augment it with ones, for
     # broadcasting, so that when multiplies some tensor the weights affect
     # only its first dim.
-    tmp_weights = fw.reshape(weights, (*weights.shape, * [1] * (n_dims - 1)))
+    tmp_weights = fw.reshape(weights, (*weights.shape, *[1] * (n_dims - 1)))
 
     # now we simply multiply the weights with the neighbors, and then sum
     # along the field of view, to get a single value per out pixel
@@ -306,7 +306,7 @@ def set_scale_and_out_sz(in_shape, out_shape, scale_factors, by_convs,
         scale_factors = (list(scale_factors) + [1] *
                          (len(in_shape) - len(scale_factors)) if fw is numpy
                          else [1] * (len(in_shape) - len(scale_factors)) +
-                         list(scale_factors))
+                              list(scale_factors))
         if out_shape is None:
             # when no out_shape given, it is calculated by multiplying the
             # scale by the in_shape (not recomended)
@@ -323,7 +323,7 @@ def set_scale_and_out_sz(in_shape, out_shape, scale_factors, by_convs,
         for ind, (sf, dim_by_convs) in enumerate(zip(scale_factors, by_convs)):
             # first we fractionaize
             if dim_by_convs:
-                frac = Fraction(1/sf).limit_denominator(max_numerator)
+                frac = Fraction(1 / sf).limit_denominator(max_numerator)
                 frac = Fraction(numerator=frac.denominator, denominator=frac.numerator)
 
             # if accuracy is within tolerance scale will be frac. if not, then
@@ -350,7 +350,7 @@ def apply_antialiasing_if_needed(interp_method, support_sz, scale_factor,
     if scale_factor >= 1.0 or not antialiasing:
         return interp_method, support_sz
     cur_interp_method = (lambda arg: scale_factor *
-                         interp_method(scale_factor * arg))
+                                     interp_method(scale_factor * arg))
     cur_support_sz = support_sz / scale_factor
     return cur_interp_method, cur_support_sz
 
